@@ -1,0 +1,1 @@
+scalac -classpath G:\Scala\bataille_navale\target\scala-2.12\classes -bootclasspath C:\Users\agbon\.sbt\boot\scala-2.12.6\lib\scala-library.jar G:\Scala\bataille_navale\src\main\scala\battleship\Game.scala G:\Scala\bataille_navale\src\main\scala\battleship\Player.scala
