@@ -22,36 +22,53 @@ object Battleship extends App {
 
         //Imprimer mes 2 grilles
         showQuestion("Enter x position to shoot")
-        val shootx = getUserIntInput()
+        val shootx = getUserIntInput().get
 
         showQuestion("Enter y position to shoot")
-        val shooty = getUserIntInput()
+        val shooty = getUserIntInput().get
 
         val shootPosition = Position(shootx,shooty,false)
 
         if(shootPosition.isInGrid && gameState.player.stillInGame){
-            val newPlayer = gameState.player.makeAShoot(shootPosition)
-            val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+            val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
+            if(indexShip != -1){
+                showQuestion("Ship touched in ("+shootPosition.axisX+","+shootPosition.axisY+")")
+                val newShootPosition = shootPosition.copy(isTouched = true)
+                val newPlayer = gameState.player.makeAShoot(newShootPosition)
+                val newPlayer1 = gameState.opponent.receiveAShoot(newShootPosition)
 
-            if(newPlayer1.myBoard.isItTouched(shootPosition).get != -1){
-                showQuestion("Ship touched in ("+shootPosition.axisX+","+shootPosition.axisY+")")  
+
+                if(newPlayer1.myBoard.shipList(indexShip).isSunk){
+                    showQuestion("You sunk my "+ newPlayer1.myBoard.shipList(indexShip).name )
+                }
+
+                if(gameState.opponent.stillInGame){
+                    val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer) 
+                    mainLoop(newGameState)
+                }
             }else{
                 showQuestion("Miss")
+                val newPlayer = gameState.player.makeAShoot(shootPosition)
+                val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+                if(gameState.opponent.stillInGame){
+                    val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer) 
+                    mainLoop(newGameState)
+                }else{
+                    showQuestion(gameState.player.name + " Win")
+                }
             }
 
-            if(gameState.opponent.stillInGame){
-                val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer) 
-                mainLoop(newGameState)
-            }else{
-                showQuestion(gameState.player.name + " Win")
-            }
+            
             
         }
             //Appeler la fonction du player qui est handleTir
             //Appeler la fonction du joueur courant qui tir sur l'opponent
             //Recup jthe new player and launch a new game with the inversed
-   
-        else if(shootPosition.isInGrid){
+        else if(shootx.equals(None) || shooty.equals(None)){
+            showQuestion("Veuillez entrer des entiers pour les coordonnées de tir")
+            mainLoop(gameState)
+        }
+        else if(!shootPosition.isInGrid){
             showQuestion("Veuillez entrer des coordonnées comprises entre 0 et 10")
             mainLoop(gameState)
         }else if(!gameState.player.stillInGame){
@@ -86,7 +103,7 @@ object Battleship extends App {
         
         val mode = getUserIntInput()
          // handle the result
-        mode match {
+        mode.get match {
             case 1 => {                
                 showQuestion("Enter first player name")
                 val name = getUserStringInput
@@ -121,7 +138,15 @@ object Battleship extends App {
         println(message)
     }
 
-    def getUserIntInput(): Int = readInt
+    def isNumeric(input: String): Boolean = input.forall(_.isDigit)
+
+    def getUserIntInput(): Option[Int] = {
+        val value = readLine
+        if(isNumeric(value)){
+            Some(value.toInt)
+        }else
+            None
+    }
 
     def getUserStringInput(): String = readLine.trim.toUpperCase
 
@@ -156,12 +181,18 @@ object Battleship extends App {
     def enterPosition(player: Player, size: Int, boatName: String ): Option[Player] = {
             showQuestion("Enter first position x of your "+boatName+"(size"+size+") ")
             val axisX = getUserIntInput()
+            
             showQuestion("Enter first position y of your "+boatName+"(size"+size+")")
             val axisY = getUserIntInput()
+
+            if(axisX.equals(None)||axisY.equals(None)){
+                showQuestion("Please enter numeric value for positions")
+                enterPosition(player,size,boatName)
+            }
             showQuestion("Enter direction, H for horizontal and V for vertical "+boatName+"(size"+size+") ")
             val directionCarrier = getUserStringInput()
 
-            val positionCarrier = Position(axisX,axisY,false)
+            val positionCarrier = Position(axisX.get,axisY.get,false)
             
             val redefinePlayer = player.createShip(boatName,positionCarrier,directionCarrier,size)
 

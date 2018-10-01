@@ -32,13 +32,29 @@ class BBoardSpec extends FlatSpec with Matchers {
     val myBoardWithMyNewShoot = myBBoard.copy(myShoots = List(position1))
     val myBoardWithOpponentNewShoot = myBBoard.copy(shipList = List(shootedShip,shipDestroy), opponentShoots = List(position2))
 
-    "The BBoard Object" should "show values" in {
+    "The BBoard Object" should "valid isItTouched" in {
         myBBoard.isItTouched(position4) should be (Some(0))
         myBBoard.isItTouched(position5) should be (Some(-1))
+    }
+
+    "The BBoard Object" should "valid aNewOpponentShoot" in {
         myBBoard.aNewOpponentShoot(position2).get should be (myBoardWithOpponentNewShoot)
+    }
+
+    "The BBoard Object" should "valid myNewShoot" in {
         myBBoard.myNewShoot(position1).get should be (myBoardWithMyNewShoot)
+    }
+
+    "The BBoard Object" should "valid checkIfPositionAlreadyExist" in {
         myBBoard.checkIfPositionAlreadyExist(position1) should be (Some(0))
+    }
+
+    "The BBoard Object" should "valid addNewShip" in {
         myBBoard.addNewShip(shipD) should be (myBoardModified)
+
+    }
+
+    "The BBoard Object" should "valid noShipLeft" in {
         myBBoard.noShipLeft() should be (Some(false))
     }
 }

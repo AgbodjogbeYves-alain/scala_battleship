@@ -6,7 +6,6 @@ package battleship
 case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoots: List[Position]){
   def isItTouched(position: Position) : Option[Int] = {
       //Checker si la position est dans un bateau et si oui verifier si la position a le statut touché
-      
       if(position != null && !shipList.isEmpty){
           val index = shipList.indexWhere(ship => (ship.checkPositionMatch(position).get == true))
           Some(index)

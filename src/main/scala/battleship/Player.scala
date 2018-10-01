@@ -57,5 +57,47 @@ case class Player(name: String,myBoard: BBoard){
         return !myBoard.noShipLeft.get
     }
 
+    def createMyGridForShow(): List[List[String]] = {
+        val grid = List.fill(10)(List.fill(10)("N/A"))
+        
+        @tailrec
+        def createMyGridForShowTailRec(grid: List[List[String]],shipList: List[Ship],remainShip: Int) : List[List[String]] ={
+           if(remainShip==0){
+               return grid
+           }else{
+
+                createMyGridForShowTailRec(grid,myBoard.shipList,remainShip-1)
+           }
+
+        }
+
+        createMyGridForShowTailRec(grid,myBoard.shipList,myBoard.shipList.size)
+    }
+
+    def createMyShootGridForShow(): List[List[String]] = {
+        val grid = List.fill(10)(List.fill(10)("N/A"))
+        
+        @tailrec
+        def createMyShootGridForShowRec(grid: List[List[String]], shootListSize: Int) : List[List[String]] = {
+            if(shootListSize<0){
+                return grid
+            }else{
+                val position = myBoard.myShoots(shootListSize)
+                val axisYList = grid(position.axisY)
+                if(position.isTouched){
+                    val newAxisYList = axisYList.updated(position.axisX, Console.WHITE)
+                    val newGrid = grid.updated(position.axisY,newAxisYList)
+                    createMyShootGridForShowRec(newGrid,shootListSize-1)
+                }else{
+                    val newAxisYList = axisYList.updated(position.axisX, Console.RED)
+                    val newGrid = grid.updated(position.axisY,newAxisYList)
+                    createMyShootGridForShowRec(newGrid,shootListSize-1)
+                }
+            }
+        }
+        
+        createMyShootGridForShowRec(grid,myBoard.myShoots.size-1)
+
+    }
 }
     
