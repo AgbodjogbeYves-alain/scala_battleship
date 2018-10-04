@@ -275,8 +275,55 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean) {
     * @return
     */
   def shootPositionHard(randX: Random, randY: Random) : Position = {
+      val mySucceedShoots = myBoard.myShoots.filter(pos => pos.isTouched == true)
+      if(!myBoard.myShoots.isEmpty) {
+        val previousTouchShoot = mySucceedShoots.filter(pos => pos.isTouched == true).head
+        if (previousTouchShoot != null) {
+          val newShoot = previousTouchShoot.copy(axisX = previousTouchShoot.axisX + 1)
+          if (newShoot.isInGrid) {
+            return newShoot
+          } else {
+            if (previousTouchShoot.copy(axisX = previousTouchShoot.axisX - 1).isInGrid) {
+              val newShoot2 = previousTouchShoot.copy(axisX = previousTouchShoot.axisX - 1)
+              return newShoot2
+            } else {
+              if (previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1).isInGrid) {
+                val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1)
+                return newShoot2
+              } else {
+                if (previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1).isInGrid) {
+                  val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1)
+                  return newShoot2
+                } else {
+                  val shootPosition = Position(randX.nextInt(10), randY.nextInt(10), false)
+                  if (myBoard.myShoots.forall(pos => !pos.equals(shootPosition) && !pos.equals(shootPosition.copy(isTouched = true)))) {
+                    return shootPosition
 
-      return Position(randX.nextInt(10),randY.nextInt(10),false)
+                  } else {
+                    shootPositionHard(randX, randY)
+                  }
+                }
+              }
+            }
+          }
+        }else{
+          val shootPosition = Position(randX.nextInt(10),randY.nextInt(10),false)
+          if(myBoard.myShoots.forall(pos => !pos.equals(shootPosition) && !pos.equals(shootPosition.copy(isTouched = true)) )) {
+            return shootPosition
+
+          }else {
+            shootPositionHard(randX,randY)
+          }
+        }
+      }else{
+        val shootPosition = Position(randX.nextInt(10),randY.nextInt(10),false)
+        if(myBoard.myShoots.forall(pos => !pos.equals(shootPosition) && !pos.equals(shootPosition.copy(isTouched = true)) )) {
+          return shootPosition
+
+        }else {
+          shootPositionHard(randX,randY)
+        }
+      }
   }
   /**
     *

@@ -273,6 +273,16 @@ object Battleship extends App {
                     val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get)
                     mainLoop(s, randomX, randomY, randomDir)
                 }
+
+                case 6 => {
+                    showQuestion("Creation of the AI-medium")
+                    val newPlayer1 = createFleet("AI-medium", 5, false)
+
+                    showQuestion("Creation of the AI-hard")
+                    val newPlayer2 = createFleet("AI-hard", 5, false)
+                    val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get)
+                    mainLoop(s, randomX, randomY, randomDir)
+                }
             }
         } else {
             showQuestion("Please pick a number for the  between 1 and 7")

@@ -182,8 +182,8 @@ object BattleShipUtil {
     showQuestion("What want you do ? R for restart this , M to  another , E for exit")
     val choice = getUserStringInput()
     if(choice=="R"){
-      val newPlayer = createFleet(gameState.player.name,1,gameState.player.isHuman)
-      val newOpponent = createFleet(gameState.opponent.name,1,gameState.opponent.isHuman)
+      val newPlayer = createFleet(gameState.player.name,5,gameState.player.isHuman)
+      val newOpponent = createFleet(gameState.opponent.name,5,gameState.opponent.isHuman)
       if(gameState.beginner.name == newPlayer.name){
         val newGameState = gameState.copy(player = newOpponent,opponent = newPlayer,beginner = newOpponent)
         mainLoop(newGameState,randomX, randomY,randomDir)
