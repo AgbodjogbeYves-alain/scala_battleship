@@ -25,8 +25,10 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
     //If the shoot touch me a boat so i return a new BBoard with new shoot in opponentShoots and a new shipLiist with the position of the ship touched
     //else i just return a new BBoard with this shipList and a new myShoots
     if(position != null){
-        val newOpponentShoot = position :: opponentShoots  
         if(isItTouched(position).get != -1){
+            val newPosition = position.copy(isTouched = true)
+            val newOpponentShoot = newPosition :: opponentShoots
+
             val (untouched,touched) = shipList.splitAt(isItTouched(position).get)
             val touchShip = touched.head.destroyPosition(position).get
 
@@ -35,7 +37,8 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
             val newBBoard = copy(shipList = newShipList,opponentShoots = newOpponentShoot)
             return Some(newBBoard)
         }else{
-            val newBBoard = copy(opponentShoots = newOpponentShoot)
+          val newOpponentShoot = position :: opponentShoots
+          val newBBoard = copy(opponentShoots = newOpponentShoot)
             return Some(newBBoard)
         }
     }else{

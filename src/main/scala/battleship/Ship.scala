@@ -15,7 +15,10 @@ case class Ship(name: String, size: Int, isSunk: Boolean, positionList: List[Pos
     */
   def checkPositionMatch(position: Position) : Option[Boolean] = {
     if(positionList!=null && position!=null){
-      val response = positionList.filter(pos=>pos.equals(position))
+      val thePosTouched = position.copy(isTouched = true)
+      val response = positionList.filter(pos=>{
+        pos.equals(thePosTouched) || pos.equals(position)
+      })
       if(response.size>=1){
         Some(true)
       }else{

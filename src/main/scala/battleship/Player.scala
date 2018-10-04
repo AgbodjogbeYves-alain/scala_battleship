@@ -2,12 +2,14 @@ package battleship
 import scala.annotation.tailrec
 import scala.util.Random
 
+
 /**
   *
   * @param name
   * @param myBoard
+  * @param myType
   */
-class Player(name: String,myBoard: BBoard){
+case class Player(name: String,myBoard: BBoard,isHuman: Boolean) {
 
   /**
     *
@@ -18,7 +20,7 @@ class Player(name: String,myBoard: BBoard){
         val player = copy(myBoard = myBoard.aNewOpponentShoot(position).get)
         return player
         //Handle the fact that the opponent shoot you. If the player touch me i return a new player with the position add to opponentsShoot
-        //and position in the ship pass to touch else a none 
+        //and position in the ship pass to touch else a none
     }
 
   /**
@@ -42,7 +44,7 @@ class Player(name: String,myBoard: BBoard){
     def createShip(name: String, position: Position, direction: String, size: Int) : Option[Player] = {
 
         val listPosition = List()
-        
+
         if(myBoard.checkIfPositionAlreadyExist(position).get != -1 || !position.isInGrid){
             return None
         }else{
@@ -65,7 +67,7 @@ class Player(name: String,myBoard: BBoard){
                     }
 
                     else{
-                        val newPosition = Position(position.axisX+size-1, position.axisY, false) 
+                        val newPosition = Position(position.axisX+size-1, position.axisY, false)
                         if(myBoard.checkIfPositionAlreadyExist(newPosition).get == -1 && newPosition.isInGrid){
                             val newListPosition = newPosition :: listPosition
                             createShipRec(name,position,newListPosition,"H",size-1)
@@ -74,15 +76,15 @@ class Player(name: String,myBoard: BBoard){
                         }
 
                     }
-                    
+
                 }
             }
-            
+
             createShipRec(name,position,listPosition,direction,size)
-        
+
         }
 
-        
+
     }
 
   /**
@@ -99,7 +101,7 @@ class Player(name: String,myBoard: BBoard){
     */
     def createMyGridForShow(): List[List[String]] = {
         val grid = List.fill(10)(List.fill(10)("N/A"))
-        
+
         @tailrec
         def createMyGridForShowTailRec(grid: List[List[String]],shipList: List[Ship],remainShip: Int) : List[List[String]] ={
            if(remainShip<0){
@@ -157,7 +159,7 @@ class Player(name: String,myBoard: BBoard){
     */
     def createMyShootGridForShow(): List[List[String]] = {
         val grid = List.fill(10)(List.fill(10)("N/A"))
-        
+
         @tailrec
         def createMyShootGridForShowRec(grid: List[List[String]], shootListSize: Int) : List[List[String]] = {
             if(shootListSize<0){
@@ -176,7 +178,7 @@ class Player(name: String,myBoard: BBoard){
                 }
             }
         }
-        
+
         createMyShootGridForShowRec(grid,myBoard.myShoots.size-1)
 
     }
@@ -197,11 +199,13 @@ class Player(name: String,myBoard: BBoard){
                 val position = positionList(remainsPosition)
                 val axisYList = gridRec(position.axisY)
                 if(!position.isTouched){
-                    val newAxisYList = axisYList.updated(position.axisX, "MO")
+                    val newAxisYList = axisYList.updated(position.axisX, "MS")
                     val newGrid = gridRec.updated(position.axisY,newAxisYList)
                     addOpponentsShootsGridRec(newGrid,remainsPosition-1)
                 }else{
-                    addOpponentsShootsGridRec(gridRec,remainsPosition-1)
+                  val newAxisYList = axisYList.updated(position.axisX, "-1")
+                  val newGrid = gridRec.updated(position.axisY,newAxisYList)
+                  addOpponentsShootsGridRec(gridRec,remainsPosition-1)
                 }
             }
        }
@@ -243,14 +247,61 @@ class Player(name: String,myBoard: BBoard){
     * @param randY
     * @return
     */
-    def shootPosition(randX: Random, randY: Random) : Option[Position] = {
-        if(name == "AI-easy"){
-            return Some(Position(randX.nextInt(10),randY.nextInt(10),false))
-        }else{
-            None
-        }
+    def shootPositionEasy(randX: Random, randY: Random) : Position = {
+      return Position(randX.nextInt(10),randY.nextInt(10),false)
     }
 
-  def
+  /**
+    *
+    * @param randX
+    * @param randY
+    * @return
+    */
+  def shootPositionMedium(randX: Random, randY: Random) : Position = {
+      val missedShoot = myBoard.myShoots.filter(pos => pos.isTouched == false)
+      val shootPosition = Position(randX.nextInt(10),randY.nextInt(10),false)
+      if(missedShoot.forall(pos => !pos.equals(shootPosition))){
+        shootPosition
+      }else{
+        shootPositionMedium(randX,randY)
+      }
+  }
+
+
+  /**
+    *
+    * @param randX
+    * @param randY
+    * @return
+    */
+  def shootPositionHard(randX: Random, randY: Random) : Position = {
+
+      return Position(randX.nextInt(10),randY.nextInt(10),false)
+  }
+  /**
+    *
+    * @param randX
+    * @param randY
+    * @return
+    */
+  def shootPosition(randX: Random, randY: Random) : Position = {
+      return Position(randX.nextInt(10),randY.nextInt(10),false)
+    }
+
+
+  def getShootFromPlayer(randX: Random, randY: Random): Option[Position] = {
+    if(!isHuman) {
+      if (name == "AI-easy") {
+        return Some(shootPositionEasy(randX, randY))
+      } else if (name == "AI-medium") {
+        return Some(shootPositionMedium(randX, randY))
+      } else if (name == "AI-hard") {
+        return Some(shootPositionMedium(randX, randY))
+      } else {
+        return None
+      }
+    }else{
+      None
+    }
+  }
 }
-    
