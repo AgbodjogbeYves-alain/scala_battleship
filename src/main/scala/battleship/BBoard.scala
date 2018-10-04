@@ -1,8 +1,11 @@
 package battleship
 
 /**
-
-**/
+  *
+  * @param shipList
+  * @param opponentShoots
+  * @param myShoots
+  */
 case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoots: List[Position]){
   def isItTouched(position: Position) : Option[Int] = {
       //Checker si la position est dans un bateau et si oui verifier si la position a le statut touché
@@ -14,6 +17,10 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
       }
   }
 
+  /**
+    *
+    * @param position
+    */
   def aNewOpponentShoot(position: Position) : Option[BBoard] = {
     //If the shoot touch me a boat so i return a new BBoard with new shoot in opponentShoots and a new shipLiist with the position of the ship touched
     //else i just return a new BBoard with this shipList and a new myShoots
@@ -35,7 +42,11 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
         None
     }
   }
-  
+
+  /**
+    *
+    * @param position
+    */
   def myNewShoot(position: Position) : Option[BBoard] = {
     if(position != null){
         val newMyShoot =  position :: myShoots
@@ -46,19 +57,24 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
     }
  }
 
+  /**
+    *
+    * @param position
+    */
  def checkIfPositionAlreadyExist(position: Position) : Option[Int] = {
-     if(position != null && !shipList.isEmpty){
+     if(position != null){
           val index = shipList.indexWhere(ship => (ship.checkPositionMatch(position).get == true))
-          if(index != -1){
-              Some(index)
-          }else{
-              None
-          }
+          Some(index)
       }else{
           None
       }
- } 
+ }
 
+  /**
+    *
+     * @param ship
+    * @return
+    */
  def addNewShip(ship : Ship) : BBoard = {
      val newShipList = ship :: shipList
      val newBBoard = copy(shipList = newShipList)
@@ -66,6 +82,10 @@ case class BBoard(shipList : List[Ship], opponentShoots: List[Position], myShoot
 
  }
 
+  /**
+    *
+    * @return
+    */
  def noShipLeft(): Option[Boolean] = {
      if(!shipList.isEmpty){
          return Some(shipList.forall(ship => ship.isSunk == true))

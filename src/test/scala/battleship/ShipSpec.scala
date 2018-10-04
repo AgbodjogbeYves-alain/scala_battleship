@@ -34,6 +34,7 @@ class ShipSpec extends FlatSpec with Matchers {
     val shipD = Ship("USD",3,false,positionDList)
 
     "The destroy ship Object" should "show values" in {
+        shipD.checkPositionMatch(positionD1).get should be (true)
         shipD.destroyPosition(positionD4).get.positionList should be (List(positionD5,positionD1,positionD2))
         shipD.destroyPosition(positionD4).get.isSunk should be (true)
     }
