@@ -5,10 +5,13 @@ import battleship.Battleship._
 import scala.annotation.tailrec
 import scala.io.StdIn.readLine
 import scala.util.Try
+import java.io.{BufferedWriter, FileWriter}
+import scala.collection.JavaConversions._
+import au.com.bytecode.opencsv.CSVWriter
 
 object BattleShipUtil {
   /**
-    *
+    * Show the modes
     */
   def show() : Unit = {
     println("Enter number for the ")
@@ -16,15 +19,18 @@ object BattleShipUtil {
     println("2. Player VS AI-easy")
     println("3. Player VS AI-medium")
     println("4. Player VS AI-hard")
-    println("5. AI-easy VS AI-medium")
-    println("6. AI-medium VS AI-hard")
-    println("7. AI-hard VS AI-easy")
+    println("5. Proof file")
+    /*println("6. AI-easy VS AI-medium")//Medium vs easy
+    println("7. AI-medium VS AI-hard")//Medium vs easy
+    println("8. AI-hard VS AI-easy")//Medium vs easy*/
+
+
 
   }
 
   /**
-    *
-    * @param message
+    * Method to display a message to the user
+    * @param message : String : Message to display
     */
   def showQuestion(message: String) : Unit = {
     println()
@@ -33,8 +39,8 @@ object BattleShipUtil {
   }
 
   /**
-    *
-    * @return
+    * Method to get a int from the user
+    * @return : Option[Int] : Some(Int) if the user enter a number else None
     */
   def getUserIntInput() : Option[Int] = {
     val input = readLine
@@ -45,17 +51,17 @@ object BattleShipUtil {
   }
 
   /**
-    *
-    * @return
+    * Method to get user string input
+    * @return : String
     */
   def getUserStringInput(): String = readLine.trim.toUpperCase
 
 
   /**
-    *
-    * @param name
-    * @param nbShips
-    * @return
+    * Method to create a player fleet
+    * @param name : Player Name
+    * @param nbShips : Ship number
+    * @return : Player : A new player with his fleet
     */
   def createFleet(name:String, nbShips: Int,playerType: Boolean): Player = {
     //Si nbBateau == 0 return the new player with his list of ships update
@@ -65,12 +71,6 @@ object BattleShipUtil {
     val player = Player(name,BoardP,playerType)
     showQuestion("Hi "+name+". Please enter the following informations")
 
-    /**
-      *
-      * @param playerRec
-      * @param nbShipRec
-      * @return
-      */
     @tailrec
     def createFleetRec(playerRec:Player,nbShipRec: Int): Player = {
       if(nbShipRec==0){
@@ -93,19 +93,20 @@ object BattleShipUtil {
   }
 
   /**
-    *
-    * @param player
-    * @param size
-    * @param boatName
-    * @return
+    * Method to ask the player for the first up or left position of a ship and the direction
+    * @param player : Player : The concerned player
+    * @param size : Int : Ship size
+    * @param boatName : String  :Ship name
+    * @return : Option[Player] : A new player with a new Ship
     */
   def enterPosition(player: Player, size: Int, boatName: String ): Option[Player] = {
     if(player.isHuman){
-      showQuestion("Enter first position x of your "+boatName+"(size "+size+") ")
-      val axisX = getUserIntInput()
+        showQuestion("Enter first position x of your "+boatName+"(size "+size+") ")
+        val axisX = getUserIntInput()
 
       showQuestion("Enter first position y of your "+boatName+"(size "+size+")")
       val axisY = getUserIntInput()
+
 
       if(!axisX.isEmpty && !axisY.isEmpty){
         showQuestion("Enter direction, H for horizontal and V for vertical "+boatName+" (size "+size+") ")
@@ -113,11 +114,11 @@ object BattleShipUtil {
 
         val positionCarrier = Position(axisX.get,axisY.get,false)
 
-        if(positionCarrier.isInGrid){
+        if(positionCarrier.isInGrid && (directionCarrier=="V" || directionCarrier == "H")){
           val redefinePlayer = player.createShip(boatName,positionCarrier,directionCarrier,size)
           return redefinePlayer
         }else{
-          showQuestion("Please enter a number for position x and y between 0 and 9")
+          showQuestion("Please enter a number for position x and y between 0 and 9; And for the direction H for horizontally or V for vertically")
           enterPosition(player,size,boatName)
         }
       }else{
@@ -135,8 +136,8 @@ object BattleShipUtil {
   }
 
   /**
-    *
-    * @param player
+    * Method to  display player ship grid
+    * @param player : Player : The player for who we want to display the ship grid
     */
   def affichage(player: Player){
     val grid = player.createMyGridForShow()
@@ -145,8 +146,8 @@ object BattleShipUtil {
     println("----------------------------------------------------------")
 
     /**
-      *
-      * @param numLine
+      * Tail rec method which iterate on each line of the player grid
+      * @param numLine : Int : Number of line
       */
     @tailrec
     def affichageRec(numLine: Int) : Unit = {
@@ -156,14 +157,14 @@ object BattleShipUtil {
         val currentLigne = grid(numLine)
         print(numLine+ "  ")
         currentLigne.foreach(pos => {
-          if(pos!="N/A" && pos!="-1" && pos!="MS"){
+          if(pos!="N/A" && pos!="-1" && pos!="MIS"){
             print(Console.BLUE_B+Console.BLACK+" "+pos+Console.BLACK+" "+Console.BLUE_B+Console.BLACK_B+"  ")
           }else if(pos=="N/A"){
             print(pos + "  ")
           }else if(pos=="-1"){
-            print(Console.RED_B+" "+pos+Console.RED_B+Console.BLACK_B+" ")
-          }else if(pos=="MS"){
-            print(Console.MAGENTA_B+Console.BLACK+" "+pos+Console.BLACK+" "+Console.MAGENTA_B+Console.BLACK_B+" ")
+            print(Console.RED_B+" "+pos+Console.RED_B+Console.BLACK_B+"  ")
+          }else if(pos=="MIS"){
+            print(Console.MAGENTA_B+pos+Console.BLACK_B+"  ")
           }
         })
         println()
@@ -175,34 +176,45 @@ object BattleShipUtil {
   }
 
   /**
-    *
-    * @param gameState
+    * Method to Seleect what to do at the end of a game
+    * @param gameState : GameState : The previous gameState
     */
   def choice(gameState : GameState) : Unit = {
-    showQuestion("What want you do ? R for restart this , M to  another , E for exit")
+    showQuestion("What want you do ? R for restart this mode, M for play another mode , Everything else for exit")
     val choice = getUserStringInput()
     if(choice=="R"){
       val newPlayer = createFleet(gameState.player.name,5,gameState.player.isHuman)
       val newOpponent = createFleet(gameState.opponent.name,5,gameState.opponent.isHuman)
+      val newPlayerWithScore = newPlayer.copy(score = gameState.player.score)
+      val newOpponentWithScore = newOpponent.copy(score = gameState.opponent.score)
+
       if(gameState.beginner.name == newPlayer.name){
-        val newGameState = gameState.copy(player = newOpponent,opponent = newPlayer,beginner = newOpponent)
-        mainLoop(newGameState,randomX, randomY,randomDir)
+        val newGameState = gameState.copy(player = newOpponentWithScore,opponent = newPlayerWithScore,beginner = newOpponentWithScore)
+        if(newGameState.player.isHuman || newGameState.opponent.isHuman){
+          mainLoop(newGameState)
+        }else{
+          changeIAS()
+        }
       }else{
-        val newGameState = gameState.copy(player = newPlayer,opponent = newOpponent,beginner = newPlayer)
-        mainLoop(newGameState,randomX, randomY,randomDir)
+        val newGameState = gameState.copy(player = newPlayerWithScore,opponent = newOpponentWithScore,beginner = newPlayerWithScore)
+        if(newGameState.player.isHuman || newGameState.opponent.isHuman){
+          mainLoop(newGameState)
+        }else{
+          changeIAS()
+        }
 
       }
     }else if(choice == "M"){
       selectMode()
-    }else if(choice == "E"){
+    }else{
       showQuestion("Thanks for this game")
     }
 
   }
 
   /**
-    *
-    * @param player
+    * Method to display player shoots
+    * @param player : Player : The concerned player
     */
   def showMyShoots(player: Player) : Unit = {
     val grid = player.createMyShootGridForShow()
@@ -223,11 +235,11 @@ object BattleShipUtil {
         print(numLine+ "  ")
         currentLigne.foreach(pos => {
           if(pos =="-1"){
-            print(Console.RED_B+pos+" "+Console.RED_B+Console.BLACK_B+"  ")
+            print(Console.RED_B+" "+pos+Console.RED_B+Console.BLACK_B+"  ")
           }else if(pos=="N/A"){
             print(pos + "  ")
           }else{
-            print(Console.MAGENTA_B+" "+"MO"+" "+Console.MAGENTA_B+Console.BLACK_B+"  ")
+            print(Console.MAGENTA_B+"MIS"+Console.BLACK_B+"  ")
           }
         })
         println()
@@ -239,4 +251,14 @@ object BattleShipUtil {
   }
   //Get the shoot from the AI
 
+  /**
+    * Method to create my csv proof file
+    * @param myScores : List[Array[String\]\] : List with all the array of the game results
+    */
+  def makeCSV(myScores : List[Array[String]]): Unit = {
+    val outputFile = new BufferedWriter(new FileWriter("./ai_proof.csv")) //replace the path with the desired path and filename with the desired filename
+    val csvWriter = new CSVWriter(outputFile)
+    csvWriter.writeAll(myScores)
+    csvWriter.close()
+  }
 }
