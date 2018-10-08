@@ -1,6 +1,6 @@
 package battleship
 
-import battleship.Battleship._
+import battleship.Game._
 
 import scala.annotation.tailrec
 import scala.io.StdIn.readLine
@@ -69,7 +69,10 @@ object BattleShipUtil {
     //tourne tant que la position n'est pas valide et ensuite rappelle create fleet
     val BoardP = BBoard(List(),List(),List())
     val player = Player(name,BoardP,playerType)
-    showQuestion("Hi "+name+". Please enter the following informations")
+
+    if(playerType) {
+      showQuestion("Hi " + name)
+    }
 
     @tailrec
     def createFleetRec(playerRec:Player,nbShipRec: Int): Player = {
@@ -78,10 +81,14 @@ object BattleShipUtil {
       }else{
         val newPlayer = enterPosition(playerRec,boatSize(nbShipRec-1),boatName(nbShipRec-1))
         if(newPlayer.isEmpty){
-          showQuestion("The positions for your ship is out of the grid or is already used by another Ship.")
+          if(playerType){
+            showQuestion("The positions for your ship is out of the grid or is already used by another Ship.")
+          }
           createFleetRec(playerRec,nbShipRec)
         }else{
-          showQuestion("Your "+boatName(nbShipRec-1)+" has been created")
+          if(playerType) {
+            showQuestion("Your " + boatName(nbShipRec - 1) + " has been created")
+          }
           createFleetRec(newPlayer.get,nbShipRec-1)
 
         }

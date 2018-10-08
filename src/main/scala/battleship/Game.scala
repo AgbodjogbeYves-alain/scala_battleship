@@ -7,11 +7,11 @@ import scala.util.Try
 
 import BattleShipUtil._
 /**
-  *
-  * @param player
-  * @param opponent
-  * @param beginner
-  * @param mode
+  * GameState Class which register the current state of the game
+  * @param player : Player : The current Player
+  * @param opponent : Player : The next player and actual opponent
+  * @param beginner : Player : The player which begins the game
+  * @param mode : Int : The mode choose by the user
   */
 
 case class GameState(player: Player, opponent: Player, beginner: Player, mode: Int, randomDir: Random, randomX: Random, randomY: Random)
@@ -20,7 +20,7 @@ case class GameState(player: Player, opponent: Player, beginner: Player, mode: I
 /**
   *
   */
-object Battleship extends App {
+object Game extends App {
     //val numbers = Array.ofDim[Int](10, 10)
 
     val boatSize = Array(2, 3, 3, 4, 5)
@@ -33,11 +33,8 @@ object Battleship extends App {
     selectMode()
 
     /**
-      *
-      * @param gameState
-      * @param randomX
-      * @param randomY
-      * @param randomDir
+      * Method to handle the battle between humans and a human and an AI
+      * @param gameState : GameState : Previous gameState with the player, the score, the random values
       */
     @tailrec
     def mainLoop(gameState: GameState) {
@@ -183,33 +180,30 @@ object Battleship extends App {
     }
 
     /**
-      *
-      * @param gameState
-      * @param randomX
-      * @param randomY
-      * @param randomDir
+      * Method to make a battle between AIs
+      * @param gameState : GameState : Previous gameState with the player, the score, the random values
       */
     @tailrec
     def mainLoopAIVSAI(gameState: GameState) : GameState = {
-            showQuestion("Ship AI grid")
+            /*showQuestion("Ship AI grid")
             affichage(gameState.player)
 
             showQuestion("My shoots grid")
             showMyShoots(gameState.player)
-
+            */
 
             val shootPosition = gameState.player.getShootFromPlayer(gameState.randomX, gameState.randomY).get //Get the shoot from the AI
             if (shootPosition.isInGrid && gameState.opponent.stillInGame) {
                 val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
                 if (indexShip != -1) {
-                    showQuestion("Ship touched in (" + shootPosition.axisX + "," + shootPosition.axisY + ")")
+                    //showQuestion("Ship touched in (" + shootPosition.axisX + "," + shootPosition.axisY + ")")
                     val newShootPosition = shootPosition.copy(isTouched = true)
                     val newPlayer = gameState.player.makeAShoot(newShootPosition)
                     val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
 
-                    if (newPlayer1.myBoard.shipList(indexShip).isSunk) {
-                        showQuestion("You sunk " + newPlayer1.name + " " + newPlayer1.myBoard.shipList(indexShip).name)
-                    }
+                    /*if (newPlayer1.myBoard.shipList(indexShip).isSunk) {
+                        //showQuestion("You sunk " + newPlayer1.name + " " + newPlayer1.myBoard.shipList(indexShip).name)
+                    }*/
 
                     if (newPlayer1.stillInGame) {
                         val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
@@ -222,11 +216,11 @@ object Battleship extends App {
                         return newGS
                     }
                 } else {
-                    showQuestion("Miss")
+                    //showQuestion("Miss")
                     val newPlayer = gameState.player.makeAShoot(shootPosition)
                     val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
                     if (gameState.opponent.stillInGame) {
-                        showQuestion("My shoots")
+                        //showQuestion("My shoots")
 
                         val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
                         mainLoopAIVSAI(newGameState)
@@ -249,7 +243,7 @@ object Battleship extends App {
     }
 
     /**
-      *
+      * Method to select the game mode by input of the user
       */
     def selectMode(): Unit = {
         show()
@@ -357,6 +351,9 @@ object Battleship extends App {
         // handle the result
     }
 
+    /**
+      * Method to execute the hundreds
+      */
     def changeIAS() : Unit = {
       val s = GameState(null, null, null, 5, randomDir, randomX, randomY)
       @tailrec
@@ -403,6 +400,14 @@ object Battleship extends App {
       changeIASRec(s,1,List())
     }
 
+    /**
+      * Method to execute 100 games format two AIs
+      *
+      * @param gameState : GameState : Current GameState with current scores and players
+      * @param centaine : Int : The centaine --> 1 for the 100 first games between AI-medium and AI-easy , 2 for the 100 second games between AI-hard and AI-medium and 3 for the 100 third games between AI-hard and AI-easy
+      * @param myResult : List[Array[String/]/] : Previous result from previous battle in the good format to insert in the final CSV
+      * @return (GameState,List[Array[String]]) : The gameState after 100 battles and the result in the good format
+      */
     def NinetyNinetyGames(gameState: GameState,centaine: Int,myResult : List[Array[String]]): (GameState,List[Array[String]]) = {
         @tailrec
         def NinetyNinetyGamesRec(gameStateRec: GameState,nGame: Int): (GameState,List[Array[String]]) ={

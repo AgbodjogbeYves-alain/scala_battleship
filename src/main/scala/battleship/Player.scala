@@ -118,8 +118,7 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean,score: Int=0) {
       } else {
         val showedShipPositions = shipList(remainShip).positionList
         val newGrid = defineNewGrid(showedShipPositions, gridRec)
-        //Grille avec les position touchées des bateaux et les position des bateaux
-        val finalGrid = addOpponentsShootsGrid(myBoard.opponentShoots, newGrid) //Grille avec les positions des bateau,des tir manqué et des tir non manqués
+        val finalGrid = addOpponentsShootsGrid(myBoard.opponentShoots, newGrid)
         createMyGridForShowTailRec(finalGrid, myBoard.shipList, remainShip - 1)
       }
     }
@@ -135,6 +134,7 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean,score: Int=0) {
     * @return : List[List[String/]/] : The new grid with all the position of one ship represented as strings
     */
   def defineNewGrid(positionList: List[Position], grid: List[List[String]]): List[List[String]] = {
+
     /**
       * Tail rec method which iterate on each position
       * @param gridRec : List[List[String/]/] : The grid with all positiions
