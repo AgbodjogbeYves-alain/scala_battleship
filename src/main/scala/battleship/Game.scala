@@ -3,199 +3,431 @@ package battleship
 import scala.annotation.tailrec
 import scala.util.Random
 import scala.io.StdIn.readLine
+import scala.util.Try
+
+import BattleShipUtil._
+/**
+  *
+  * @param player
+  * @param opponent
+  * @param beginner
+  * @param mode
+  */
+
+case class GameState(player: Player, opponent: Player, beginner: Player, mode: Int, randomDir: Random, randomX: Random, randomY: Random)
 
 
-case class GameState(player: Player, opponent: Player, beginner: Player)
-
+/**
+  *
+  */
 object Battleship extends App {
     //val numbers = Array.ofDim[Int](10, 10)
-    val shipColors = Array(Console.RED,Console.BLUE,Console.WHITE,Console.YELLOW,Console.GREEN)
-    val boatSize = Array(2,3,3,4,5)
-    val boatName = Array("Destroyer","Submarine","Cruiser","Battleship","Carrier")
-    val r = Random
+
+    val boatSize = Array(2, 3, 3, 4, 5)
+    val boatName = Array("Destroyer", "Submarine", "Cruiser", "Battleship", "Carrier")
+
+    val randomDir = Random
+    val randomX = Random
+    val randomY = Random
 
     selectMode()
 
+    /**
+      *
+      * @param gameState
+      * @param randomX
+      * @param randomY
+      * @param randomDir
+      */
     @tailrec
     def mainLoop(gameState: GameState) {
-        showQuestion("Turn of player "+ gameState.player.name)
 
-        //Imprimer mes 2 grilles
-        showQuestion("Enter x position to shoot")
-        val shootx = getUserIntInput().get
+        showQuestion("Turn of player " + gameState.player.name)
 
-        showQuestion("Enter y position to shoot")
-        val shooty = getUserIntInput().get
+        //If the player is not an AI
+        if (gameState.player.isHuman) {
+            showQuestion(gameState.player.name + "ships grid")
+            affichage(gameState.player)
 
-        val shootPosition = Position(shootx,shooty,false)
+            showQuestion(gameState.player.name + "shoots grid")
+            showMyShoots(gameState.player)
 
-        if(shootPosition.isInGrid && gameState.player.stillInGame){
-            val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
-            if(indexShip != -1){
-                showQuestion("Ship touched in ("+shootPosition.axisX+","+shootPosition.axisY+")")
-                val newShootPosition = shootPosition.copy(isTouched = true)
-                val newPlayer = gameState.player.makeAShoot(newShootPosition)
-                val newPlayer1 = gameState.opponent.receiveAShoot(newShootPosition)
+            showQuestion("Enter x position to shoot")
+            val shootx = getUserIntInput()
+
+            showQuestion("Enter y position to shoot")
+            val shooty = getUserIntInput()
+
+            if (shootx.isEmpty || shooty.isEmpty) {
+                mainLoop(gameState)
+            } else {
+                val shootPosition = Position(shootx.get, shooty.get, false)
+
+                if (shootPosition.isInGrid && gameState.opponent.stillInGame) {
+                    val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
+                    if (indexShip != -1) {
+                        showQuestion("Ship touched in (" + shootPosition.axisX + "," + shootPosition.axisY + ")")
+                        val newShootPosition = shootPosition.copy(isTouched = true)
+                        val newPlayer = gameState.player.makeAShoot(newShootPosition)
+                        val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+
+                        if (newPlayer1.myBoard.shipList(indexShip).isSunk) {
+                            showQuestion("You sunk " + newPlayer1.name + " " + newPlayer1.myBoard.shipList(indexShip).name)
+                        }
+
+                        if (newPlayer1.stillInGame) {
+                            val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                            mainLoop(newGameState)
+                        } else {
+                            val winner = gameState.player.copy(score = newPlayer.score+1 )
+                            val newGS = gameState.copy(player = winner)
+                            showQuestion(newGS.player.name + " Win")
+                            showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                            choice(newGS)
+                        }
+                    } else {
+                        showQuestion("Miss")
+                        val newPlayer = gameState.player.makeAShoot(shootPosition)
+                        val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+                        if (gameState.opponent.stillInGame) {
+                            val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                            mainLoop(newGameState)
+                        } else {
+                            val winner = gameState.player.copy(score = newPlayer.score+1 )
+                            val newGS = gameState.copy(player = winner)
+                            showQuestion(newGS.player.name + " Win")
+                            showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                            choice(newGS)
+
+                        }
+                    }
 
 
-                if(newPlayer1.myBoard.shipList(indexShip).isSunk){
-                    showQuestion("You sunk my "+ newPlayer1.myBoard.shipList(indexShip).name )
                 }
-
-                if(gameState.opponent.stillInGame){
-                    val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer) 
-                    mainLoop(newGameState)
-                }
-            }else{
-                showQuestion("Miss")
-                val newPlayer = gameState.player.makeAShoot(shootPosition)
-                val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
-                if(gameState.opponent.stillInGame){
-                    val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer) 
-                    mainLoop(newGameState)
-                }else{
-                    showQuestion(gameState.player.name + " Win")
+                else if (!shootPosition.isInGrid) {
+                    showQuestion("Please enter coordinate between 0 and 9")
+                    mainLoop(gameState)
+                } else if (!gameState.opponent.stillInGame) {
+                    val winner = gameState.player.copy(score = gameState.player.score+1 )
+                    val newGS = gameState.copy(player = winner)
+                    showQuestion(newGS.player.name + " Win")
+                    showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                    choice(newGS)
                 }
             }
+            //If the player is an AI
+        } else {
+            showQuestion("Ship AI grid")
+            affichage(gameState.player)
 
-            
-            
+            showQuestion("AI shoots grid")
+            showMyShoots(gameState.player)
+
+
+            val shootPosition = gameState.player.getShootFromPlayer(gameState.randomX, gameState.randomY).get //Get the shoot from the AI
+            if (shootPosition.isInGrid && gameState.opponent.stillInGame) {
+                val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
+                if (indexShip != -1) {
+                    showQuestion("Ship touched in (" + shootPosition.axisX + "," + shootPosition.axisY + ")")
+                    val newShootPosition = shootPosition.copy(isTouched = true)
+                    val newPlayer = gameState.player.makeAShoot(newShootPosition)
+                    val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+
+                    if (newPlayer1.myBoard.shipList(indexShip).isSunk) {
+                        showQuestion("You sunk " + newPlayer1.name + " " + newPlayer1.myBoard.shipList(indexShip).name)
+                    }
+
+                    if (newPlayer1.stillInGame) {
+                        val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                        mainLoop(newGameState)
+                    } else {
+                        val winner = gameState.player.copy(score = gameState.player.score+1 )
+                        val newGS = gameState.copy(player = winner)
+                        showQuestion(newGS.player.name + " Win")
+                        showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                        choice(newGS)
+                    }
+                } else {
+                    showQuestion("Miss")
+                    val newPlayer = gameState.player.makeAShoot(shootPosition)
+                    val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+                    if (gameState.opponent.stillInGame) {
+                        showQuestion("My shoots")
+
+                        val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                        mainLoop(newGameState)
+                    } else {
+                        val winner = gameState.player.copy(score = gameState.player.score+1 )
+                        val newGS = gameState.copy(player = winner)
+                        showQuestion(newGS.player.name + " Win")
+                        showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                        choice(newGS)
+
+                    }
+                }
+            }
+            else if (!shootPosition.isInGrid) {
+                mainLoop(gameState)
+            } else if (!gameState.opponent.stillInGame) {
+                val winner = gameState.player.copy(score = gameState.player.score+1 )
+                val newGS = gameState.copy(player = winner)
+                showQuestion(newGS.player.name + " Win")
+                showQuestion("Score "+newGS.player.name+" : "+ newGS.player.score)
+                showQuestion("Score "+newGS.opponent.name+" : "+ newGS.opponent.score)
+                choice(newGS)
+
+            }
+
         }
-            //Appeler la fonction du player qui est handleTir
-            //Appeler la fonction du joueur courant qui tir sur l'opponent
-            //Recup jthe new player and launch a new game with the inversed
-        else if(shootx.equals(None) || shooty.equals(None)){
-            showQuestion("Veuillez entrer des entiers pour les coordonnées de tir")
-            mainLoop(gameState)
-        }
-        else if(!shootPosition.isInGrid){
-            showQuestion("Veuillez entrer des coordonnées comprises entre 0 et 10")
-            mainLoop(gameState)
-        }else if(!gameState.player.stillInGame){
-            showQuestion(gameState.opponent.name + " Win")
+
+    }
+
+    /**
+      *
+      * @param gameState
+      * @param randomX
+      * @param randomY
+      * @param randomDir
+      */
+    @tailrec
+    def mainLoopAIVSAI(gameState: GameState) : GameState = {
+            showQuestion("Ship AI grid")
+            affichage(gameState.player)
+
+            showQuestion("My shoots grid")
+            showMyShoots(gameState.player)
+
+
+            val shootPosition = gameState.player.getShootFromPlayer(gameState.randomX, gameState.randomY).get //Get the shoot from the AI
+            if (shootPosition.isInGrid && gameState.opponent.stillInGame) {
+                val indexShip = gameState.opponent.myBoard.isItTouched(shootPosition).get
+                if (indexShip != -1) {
+                    showQuestion("Ship touched in (" + shootPosition.axisX + "," + shootPosition.axisY + ")")
+                    val newShootPosition = shootPosition.copy(isTouched = true)
+                    val newPlayer = gameState.player.makeAShoot(newShootPosition)
+                    val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+
+                    if (newPlayer1.myBoard.shipList(indexShip).isSunk) {
+                        showQuestion("You sunk " + newPlayer1.name + " " + newPlayer1.myBoard.shipList(indexShip).name)
+                    }
+
+                    if (newPlayer1.stillInGame) {
+                        val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                        mainLoopAIVSAI(newGameState)
+                    } else {
+                        val winner = gameState.player.copy(score = gameState.player.score+1 )
+                        val newGS = gameState.copy(player = winner)
+                        showQuestion(newGS.player.name + " Win")
+                        showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                        return newGS
+                    }
+                } else {
+                    showQuestion("Miss")
+                    val newPlayer = gameState.player.makeAShoot(shootPosition)
+                    val newPlayer1 = gameState.opponent.receiveAShoot(shootPosition)
+                    if (gameState.opponent.stillInGame) {
+                        showQuestion("My shoots")
+
+                        val newGameState = gameState.copy(player = newPlayer1, opponent = newPlayer)
+                        mainLoopAIVSAI(newGameState)
+                    } else {
+                        val winner = gameState.player.copy(score = gameState.player.score+1 )
+                        val newGS = gameState.copy(player = winner)
+                        showQuestion(newGS.player.name + " Win")
+                        showQuestion(newGS.player.name+" ; "+ newGS.player.score +" ; "+newGS.opponent.name+" ; "+ newGS.opponent.score)
+                        return newGS
+                    }
+                }
+            }else{
+                val winner = gameState.player.copy(score = gameState.player.score + 1)
+                val newGS = gameState.copy(player = winner)
+                showQuestion(newGS.player.name + " Win")
+                showQuestion(newGS.player.name + " ; " + newGS.player.score + " ; " + newGS.opponent.name + " ; " + newGS.opponent.score)
+                return newGS
+            }
+
+    }
+
+    /**
+      *
+      */
+    def selectMode(): Unit = {
+        show()
+
+        val mode = getUserIntInput()
+        if (mode.nonEmpty) {
+            mode.get match {
+                case 1 => {
+                    showQuestion("Enter first player name")
+                    val name = getUserStringInput()
+                    val newPlayer1 = createFleet(name, 1, true)
+
+                    showQuestion("Enter second player name")
+                    val name2 = getUserStringInput()
+                    val newPlayer2 = createFleet(name2, 1, true)
+
+                    val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get,randomX, randomY, randomDir)
+                    mainLoop(s)
+                }
+
+                case 2 => {
+                    showQuestion("Enter first player name")
+                    val name = getUserStringInput()
+                    val newPlayer1 = createFleet(name, 5, true)
+
+                    showQuestion("Creation of the AI-easy")
+                    val newPlayer2 = createFleet("AI-easy", 5, false)
+
+                    val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get,randomX, randomY, randomDir)
+                    mainLoop(s)
+                }
+
+                case 3 => {
+                    showQuestion("Enter Human player name")
+                    val name = getUserStringInput()
+                    val newPlayer1 = createFleet(name, 5, true)
+
+                    showQuestion("Creation of the AI-medium")
+                    val newPlayer2 = createFleet("AI-medium", 5, false)
+
+                    val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get,randomX, randomY, randomDir)
+                    mainLoop(s)
+                }
+
+                case 4 => {
+                  showQuestion("Enter Human player name")
+                  val name = getUserStringInput()
+                  val newPlayer1 = createFleet(name, 5, true)
+
+                  showQuestion("Creation of the AI-medium")
+                  val newPlayer2 = createFleet("AI-hard", 5, false)
+
+                  val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get,randomX, randomY, randomDir)
+                  mainLoop(s)
+                }
+
+
+                case 5 => {
+                    showQuestion("Creation of proof file")
+                    changeIAS()
+                }
+                case _ => {
+                  showQuestion("Please pick a number for the  between 1 and 8")
+                  selectMode()
+                }
+                /*case 6 => {
+                  showQuestion("Creation of the AI-easy")
+                  val newPlayer1 = createFleet("AI-easy", 5, false)
+
+                  showQuestion("Creation of the AI-medium")
+                  val newPlayer2 = createFleet("AI-medium", 5, false)
+
+                  val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+                  val gS = mainLoopAIVSAI(s)
+                  choice(gS)
+
+                }
+                case 7 => {
+                  showQuestion("Creation of the AI-medium")
+                  val newPlayer1 = createFleet("AI-medium", 5, false)
+
+                  showQuestion("Creation of the AI-hard")
+                  val newPlayer2 = createFleet("AI-hard", 5, false)
+
+                  val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+                  val gS = mainLoopAIVSAI(s)
+                  choice(gS)
+                }
+                case 8 => {
+                  showQuestion("Creation of the AI-easy")
+                  val newPlayer1 = createFleet("AI-easy", 5, false)
+
+                  showQuestion("Creation of the AI-hard")
+                  val newPlayer2 = createFleet("AI-hard", 5, false)
+
+                  val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+                  val gS = mainLoopAIVSAI(s)
+                  choice(gS)
+                }*/
+            }
+        } else {
+            showQuestion("Please pick a number for the  between 1 and 8")
+            selectMode()
         }
         // handle the result
-        /*userInput match {
-            case "H" | "T" => {
-                val coinTossResult = tossCoin(random)
-                val newNumFlips = gameState.numFlips + 1
-                if (userInput == coinTossResult) {
-                    val newNumCorrect = gameState.numCorrect + 1
-                    val newGameState = gameState.copy(numFlips = newNumFlips, numCorrect = newNumCorrect)
-                    printGameState(printableFlipResult(coinTossResult), newGameState)
-                    mainLoop(newGameState, random)
-                } else {
-                    val newGameState = gameState.copy(numFlips = newNumFlips)
-                    printGameState(printableFlipResult(coinTossResult), newGameState)
-                    mainLoop(newGameState, random)
-                }
-            }
-            case _   => {
-                printGameOver()
-                printGameState(gameState)
-                // return out of the recursion here
-            }
-        }*/
     }
 
-    def selectMode() : Unit = {
-        showMode()
-        
-        val mode = getUserIntInput()
-         // handle the result
-        mode.get match {
-            case 1 => {                
-                showQuestion("Enter first player name")
-                val name = getUserStringInput
-                val newPlayer1 = createFleet(name,5)
+    def changeIAS() : Unit = {
+      val s = GameState(null, null, null, 5, randomDir, randomX, randomY)
+      @tailrec
+      def changeIASRec(gSRec : GameState, centaine : Int,myResult: List[Array[String]]): Unit = {
+        if(centaine == 4){
+          choice(gSRec)
+          println()
+        }else if(centaine == 1){
+          showQuestion("Creation of the AI-easy")
+          val newPlayer1 = createFleet("AI-easy", 5, false)
 
-                showQuestion("Enter second player name")
-                val name2 = getUserStringInput
-                val newPlayer2 = createFleet(name2,5)
-                val s = GameState(newPlayer1, newPlayer2, newPlayer2)
-                mainLoop(s)
-            }
+          showQuestion("Creation of the AI-medium")
+          val newPlayer2 = createFleet("AI-medium", 5, false)
+
+          val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+          val gS = NinetyNinetyGames(s,centaine,myResult)
+          changeIASRec(gS._1,centaine+1,gS._2)
+
+        }else if(centaine == 2) {
+          showQuestion("Creation of the AI-medium")
+          val newPlayer1 = createFleet("AI-medium", 5, false)
+
+          showQuestion("Creation of the AI-hard")
+          val newPlayer2 = createFleet("AI-hard", 5, false)
+
+          val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+          val gS = NinetyNinetyGames(s,centaine,myResult)
+          changeIASRec(gS._1,centaine+1,gS._2)
+
+        }else if(centaine==3){
+          showQuestion("Creation of the AI-easy")
+          val newPlayer1 = createFleet("AI-easy", 5, false)
+
+          showQuestion("Creation of the AI-hard")
+          val newPlayer2 = createFleet("AI-hard", 5, false)
+
+          val s = GameState(newPlayer1, newPlayer2, newPlayer1, 5,randomX, randomY, randomDir)
+          val gS = NinetyNinetyGames(s,centaine,myResult)
+          changeIASRec(gS._1,centaine+1,gS._2)
+
         }
+      }
 
-
-
+      changeIASRec(s,1,List())
     }
 
-    /*def enterPosition() : Option[Player] = {
-
-    }*/
-
-    def showMode() : Unit = {
-        println("Enter number for the mode")
-        println("1. Player VS Player")
-        println("2. Player VS AI-easy")
-        println("3. Player VS AI-medium")
-        println("5. Player VS AI-hard")
-        println("6. AI VS AI")
-    }
-
-    def showQuestion(message: String) : Unit = {
-        println(message)
-    }
-
-    def isNumeric(input: String): Boolean = input.forall(_.isDigit)
-
-    def getUserIntInput(): Option[Int] = {
-        val value = readLine
-        if(isNumeric(value)){
-            Some(value.toInt)
-        }else
-            None
-    }
-
-    def getUserStringInput(): String = readLine.trim.toUpperCase
-
-    def createFleet(name:String, nbShips: Int): Player = {
-        //Si nbBateau == 0 return the new player with his list of ships update
-        //Sinon recuperer le nom du bateau par rapport a un tableau avec les noms des bateaux, appeler le enterPosition qui
-        //tourne tant que la position n'est pas valide et ensuite rappelle create fleet
-        val BoardP = BBoard(List(),List(),List())
-        val player = Player(name,BoardP)
-
+    def NinetyNinetyGames(gameState: GameState,centaine: Int,myResult : List[Array[String]]): (GameState,List[Array[String]]) = {
         @tailrec
-        def createFleetRec(playerRec:Player,nbShip: Int): Player = {
-            if(nbShip==0){
-                return playerRec
+        def NinetyNinetyGamesRec(gameStateRec: GameState,nGame: Int): (GameState,List[Array[String]]) ={
+            if(nGame >= 100){
+                val myResults =  myResult :+ Array(gameStateRec.player.name,gameStateRec.player.score.toString,gameStateRec.opponent.name,gameStateRec.opponent.score.toString)
+                makeCSV(myResults)
+              return (gameStateRec,myResults)
             }else{
-                val newPlayer = enterPosition(player,boatSize(nbShip),boatName(nbShip))
-                if(newPlayer==None){
-                    showQuestion("The position that you enter is out of the grid or is already used by another Ship.")
-                    createFleetRec(player,nbShip)
-                }else{
-                    showQuestion("Your "+boatName(nbShip)+" has been created")
-                    createFleetRec(newPlayer.get,nbShip-1)
+                val newPlayer = createFleet(gameStateRec.player.name,5,gameStateRec.player.isHuman)
+                val newOpponent = createFleet(gameStateRec.opponent.name,5,gameStateRec.opponent.isHuman)
+                val newPlayerWithScore = newPlayer.copy(score = gameStateRec.player.score)
+                val newOpponentWithScore = newOpponent.copy(score = gameStateRec.opponent.score)
+                if(gameStateRec.beginner.name == newPlayer.name){
+                    val newGameState = gameStateRec.copy(player = newOpponentWithScore,opponent = newPlayerWithScore,beginner = newOpponentWithScore)
+                    val thisGameResult = mainLoopAIVSAI(newGameState)
+                    NinetyNinetyGamesRec(thisGameResult,nGame+1)
 
+                }else{
+                    val newGameState = gameStateRec.copy(player = newPlayerWithScore,opponent = newOpponentWithScore,beginner = newPlayerWithScore)
+                    val thisGameResult = mainLoopAIVSAI(newGameState)
+                    NinetyNinetyGamesRec(thisGameResult,nGame+1)
                 }
             }
         }
 
-        createFleetRec(player,nbShips)
-
-    }
-
-    def enterPosition(player: Player, size: Int, boatName: String ): Option[Player] = {
-            showQuestion("Enter first position x of your "+boatName+"(size"+size+") ")
-            val axisX = getUserIntInput()
-            
-            showQuestion("Enter first position y of your "+boatName+"(size"+size+")")
-            val axisY = getUserIntInput()
-
-            if(axisX.equals(None)||axisY.equals(None)){
-                showQuestion("Please enter numeric value for positions")
-                enterPosition(player,size,boatName)
-            }
-            showQuestion("Enter direction, H for horizontal and V for vertical "+boatName+"(size"+size+") ")
-            val directionCarrier = getUserStringInput()
-
-            val positionCarrier = Position(axisX.get,axisY.get,false)
-            
-            val redefinePlayer = player.createShip(boatName,positionCarrier,directionCarrier,size)
-
-            return redefinePlayer
+      NinetyNinetyGamesRec(gameState,0)
     }
 }
