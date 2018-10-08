@@ -23,7 +23,14 @@ case class GameState(player: Player, opponent: Player, beginner: Player, mode: I
 object Game extends App {
     //val numbers = Array.ofDim[Int](10, 10)
 
+    /**
+      * Ships size
+      */
     val boatSize = Array(2, 3, 3, 4, 5)
+
+    /**
+      * Boats name
+      */
     val boatName = Array("Destroyer", "Submarine", "Cruiser", "Battleship", "Carrier")
 
     val randomDir = Random
