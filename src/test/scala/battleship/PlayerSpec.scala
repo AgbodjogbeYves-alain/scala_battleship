@@ -23,6 +23,11 @@ class PlayerSpec extends FlatSpec with Matchers {
     val positionD5 = Position(6,5,false)
 
 
+    val positionEnd = Position(6,5,true)
+    val shipEnd = Ship("End",1,true,List(positionEnd))
+    val boardEnd = BBoard(List(shipEnd),List(),myShoots)
+    val playerEnd = Player("Yves",boardEnd,true)
+
     val myShoots = List(positionD1,positionD2,positionD3)
 
     val myBBoard = BBoard(List(ship),List(),myShoots)
@@ -49,6 +54,10 @@ class PlayerSpec extends FlatSpec with Matchers {
     val newShipV2 = Ship("Carrier",2,false,List(newPos1V2,newPos2V2))
     val newMyBoardV2 = myBBoard.copy(shipList = newShipV2 :: List(newShipV,ship))
     val newPlayerV2 = player.copy(myBoard = newMyBoardV2)
+
+    "The player object" should "valid its infos" in {
+      player.name should be ("Submarine")
+    }
 
     //All tests for player
     "The Player Object" should "valid receiveAShoot" in {
@@ -81,6 +90,12 @@ class PlayerSpec extends FlatSpec with Matchers {
     "The Player Object" should "valid createMyGridForShow" in {
         player.createMyGridForShow() should be (List(List("4","4","4","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","4","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A"),List("N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A")))
     }
+
+    "The Player Object" should "valid stillInGame" in {
+        player.stillInGame() should be (true)
+        playerEnd.stillInGame() should be (false)
+    }
+
 
 
 }

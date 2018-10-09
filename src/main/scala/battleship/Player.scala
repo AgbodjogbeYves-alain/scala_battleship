@@ -288,23 +288,22 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean,score: Int=0) {
     val mySucceedShoots = myBoard.myShoots.filter(pos => pos.isTouched)
     if (myBoard.myShoots.nonEmpty && mySucceedShoots.nonEmpty) {//If AI succeed at least 1 shoot
       val previousTouchShoot = mySucceedShoots.head//We gett the previous touched shoot
-      if (previousTouchShoot != null) {
-        val newShoot = previousTouchShoot.copy(axisX = previousTouchShoot.axisX + 1,isTouched = false)
-        if (newShoot.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot) && !pos.equals(newShoot.copy(isTouched = true)))) {//We define a new shoot and check if is not already use
-          return newShoot
+        val newShoot = previousTouchShoot.copy(axisX = previousTouchShoot.axisX + 1,isTouched = false)//We create a new shoot just at the right of the previous
+        if (newShoot.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot) && !pos.equals(newShoot.copy(isTouched = true)))) {//We f is not already shoot
+          return newShoot //If it is not we will use it to shoot this turn else we will try to find another
         } else {
-          val newShoot2 = previousTouchShoot.copy(axisX = previousTouchShoot.axisX - 1, isTouched = false)
-          if (newShoot2.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot2) && !pos.equals(newShoot2.copy(isTouched = true)))) {
+          val newShoot2 = previousTouchShoot.copy(axisX = previousTouchShoot.axisX - 1, isTouched = false)//Try to go to the left of the previous position touched
+          if (newShoot2.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot2) && !pos.equals(newShoot2.copy(isTouched = true)))) {//Test to know if this psoition not already shoot
             return newShoot2
           } else {
-            val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1, isTouched = false)
+            val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY - 1, isTouched = false)//Try to go on the up cell of the previous touched position
             if (newShoot2.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot2) && !pos.equals(newShoot2.copy(isTouched = true)))) {
               return newShoot2
             } else {
-              val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY + 1, isTouched = false)
+              val newShoot2 = previousTouchShoot.copy(axisY = previousTouchShoot.axisY + 1, isTouched = false) //Try to go on the down cell of the previous touched position
               if (newShoot2.isInGrid && myBoard.myShoots.forall(pos => !pos.equals(newShoot2) && !pos.equals(newShoot2.copy(isTouched = true)))) {
                 return newShoot2
-              } else {
+              } else {//If we don't find a position we will render a random shoot position and if this position is already in the shoot list we will call this method to try find another solution
                 val shootPosition = Position(randX.nextInt(10), randY.nextInt(10), false)
                 if (myBoard.myShoots.forall(pos => !pos.equals(shootPosition))) {
                   return shootPosition
@@ -314,14 +313,6 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean,score: Int=0) {
               }
             }
           }
-        }
-      } else {//Else we just create a random shoot
-        val shootPosition = Position(randX.nextInt(10), randY.nextInt(10), false)
-        if (myBoard.myShoots.forall(pos => !pos.equals(shootPosition) && !pos.equals(shootPosition.copy(isTouched = true)))) {
-          return shootPosition
-
-        } else {
-          shootPositionHard(randX, randY)
         }
       }
     } else {
