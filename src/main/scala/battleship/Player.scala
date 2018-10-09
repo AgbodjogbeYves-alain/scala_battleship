@@ -314,7 +314,6 @@ case class Player(name: String,myBoard: BBoard,isHuman: Boolean,score: Int=0) {
             }
           }
         }
-      }
     } else {
       val shootPosition = Position(randX.nextInt(10), randY.nextInt(10), false)
       return shootPosition

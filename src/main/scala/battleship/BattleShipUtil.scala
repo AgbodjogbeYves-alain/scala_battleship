@@ -263,7 +263,7 @@ object BattleShipUtil {
     * @param myScores : List[Array[String\]\] : List with all the array of the game results
     */
   def makeCSV(myScores : List[Array[String]]): Unit = {
-    val outputFile = new BufferedWriter(new FileWriter("./ai_proof.csv")) //replace the path with the desired path and filename with the desired filename
+    val outputFile = new BufferedWriter(new FileWriter("./src/file/ai_proof.csv")) //replace the path with the desired path and filename with the desired filename
     val csvWriter = new CSVWriter(outputFile)
     csvWriter.writeAll(myScores)
     csvWriter.close()

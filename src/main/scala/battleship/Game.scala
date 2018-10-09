@@ -261,11 +261,11 @@ object Game extends App {
                 case 1 => {
                     showQuestion("Enter first player name")
                     val name = getUserStringInput()
-                    val newPlayer1 = createFleet(name, 1, true)
+                    val newPlayer1 = createFleet(name, 5, true)
 
                     showQuestion("Enter second player name")
                     val name2 = getUserStringInput()
-                    val newPlayer2 = createFleet(name2, 1, true)
+                    val newPlayer2 = createFleet(name2, 5, true)
 
                     val s = GameState(newPlayer1, newPlayer2, newPlayer1, mode.get,randomX, randomY, randomDir)
                     mainLoop(s)
